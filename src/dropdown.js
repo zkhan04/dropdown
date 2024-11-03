@@ -1,74 +1,81 @@
-const createDropDown = (title, options) => {
-    /**
-     * Puts everything together!
-     */
-    let is_visible = false;
+const createDropDownState = () => {
+    let visible = true;
+    const listeners = []
 
-    // the element that houses everything
-    const dropDown = document.createElement("div");
-    dropDown.classList.add("dropdown");
-
-    // the "header" of the dropdown. 
-    // consists of the title/selected option
-    // and a symbol representing the status (is it open or closed?)
-    const dropDownHeader = document.createElement("div");
-    const dropDownTitle = document.createElement("div");
-    dropDownTitle.innerHTML = title;
-    dropDownTitle.classList.add("title");
-
-    const dropDownStatus = document.createElement("div");
-    dropDownStatus.classList.add("status");
-
-    dropDownHeader.appendChild(dropDownTitle);
-    dropDownHeader.appendChild(dropDownStatus);
-    dropDownHeader.classList.add("dropdown-header");
-
-    // creates a single option for a dropdown.
-    const createDropDownOption = (s) => {
-        const option = document.createElement("div");
-        option.innerHTML = s;
-
-        // selects the option and hides the dropdown
-        option.addEventListener("click", () => {
-            dropDownTitle.innerHTML = s;
-            toggleVisibility();
-        })
-
-        return option;
-    }
-
-    // a list of all the dropdown options!
-    const optionList = document.createElement("div");
-    optionList.classList.add("option-list");
-    options.forEach(element => {
-        optionList.appendChild(createDropDownOption(element));
-    });
-
-    // toggles the visibility
     const toggleVisibility = () => {
-        is_visible = !is_visible;
-        controlVisibility();
-    }
+        visible = !visible;
+        listeners.forEach(listener => listener(visible));
+    };
 
-    // based on the value of the is_visible flag, display or hide the list of options
-    const controlVisibility = () => {
-        if (is_visible) {
+    const onVisibleChange = (callback) => {
+        listeners.push(callback);
+    };
+
+    const getVisible = () => visible;
+
+    return {
+        toggleVisibility, onVisibleChange, getVisible
+    };
+}
+
+const createDropDownController = (state, dropDownHeader, optionList) => {
+    // when something in the optionList is clicked, replace the dropDownHeader (I think?)
+    dropDownHeader.addEventListener("click", () => state.toggleVisibility());
+
+    state.onVisibleChange((visible) => {
+        if (visible) {
             optionList.classList.remove("closed");
             optionList.classList.add("open");
-            dropDownStatus.innerHTML = "-";
         } else {
             optionList.classList.remove("open");
             optionList.classList.add("closed");
-            dropDownStatus.innerHTML = "+";
         }
+    });
+}
+
+const createDropDownOptionList = (options, onclick) => {
+    const optionList = document.createElement("div");
+    optionList.classList.add("option-list");
+    options.forEach(option => {
+        const optionElement = document.createElement("div");
+        optionElement.classList.add("dropdown-option");
+        optionElement.innerHTML = option;
+        optionElement.addEventListener("click", () => onclick(option));
+        optionList.appendChild(optionElement);
+    });
+    optionList.classList.add("option-list");
+    return optionList;
+}
+
+const createDropDownHeader = (title) => {
+    const dropDownHeader = document.createElement("div");
+    dropDownHeader.innerHTML = title;
+    dropDownHeader.classList.add("dropdown-header");
+    return dropDownHeader;
+}
+
+const createDropDown = (title, options) => {
+    const dropDown = document.createElement("div");
+
+    const state = createDropDownState();
+
+    const dropDownHeader = createDropDownHeader(title);
+
+    const onclick = (option) => {
+        dropDownHeader.innerHTML = option;
+        state.toggleVisibility();
     }
 
-    // when the header is clicked, the options should also be hidden
-    dropDownHeader.addEventListener("click", () => toggleVisibility());
+    const optionList = createDropDownOptionList(options, onclick);
+
+    createDropDownController(state, dropDownHeader, optionList);
+
     dropDown.appendChild(dropDownHeader);
     dropDown.appendChild(optionList);
+    dropDown.classList.add("dropdown");
 
-    controlVisibility();
+    state.toggleVisibility();
+    
     return dropDown;
 }
 
