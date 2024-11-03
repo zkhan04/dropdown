@@ -7,4 +7,3 @@ const title = "Test dropdown"
 const options = ["a", "b", "c"];
 
 body.appendChild(createDropDown(title, options));
-body.appendChild(createDropDown(title, options));
